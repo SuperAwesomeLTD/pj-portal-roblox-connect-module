@@ -1,0 +1,14 @@
+{
+	"name": "Rukkaz Roblox Event Host Module",
+	"tree": {
+		"$className": "DataModel",
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"$ignoreUnknownInstances": true,
+			"Rukkaz Roblox Event Host Module" : {
+				"$path": "src",
+				"$ignoreUnknownInstances": false
+			}
+		}
+	}
+}
