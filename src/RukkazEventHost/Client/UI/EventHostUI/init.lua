@@ -3,7 +3,7 @@ local EventSetupWindow = require(script:WaitForChild("EventSetupWindow"))
 local EventHostUI = {}
 EventHostUI.__index = EventHostUI
 EventHostUI.TOPBAR_SIZE = 36
-EventHostUI.prefab = script:WaitForChild("RukkazEventHostGui")
+EventHostUI.prefab = script:WaitForChild("PopJamEventHostGui")
 
 function EventHostUI.new(screenGui)
 	local self = setmetatable({

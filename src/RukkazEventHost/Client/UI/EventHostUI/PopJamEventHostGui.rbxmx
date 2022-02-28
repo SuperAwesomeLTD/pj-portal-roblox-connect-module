@@ -9,7 +9,7 @@
 			<int name="DisplayOrder">0</int>
 			<bool name="Enabled">true</bool>
 			<bool name="IgnoreGuiInset">true</bool>
-			<string name="Name">RukkazEventHostGui</string>
+			<string name="Name">PopJamEventHostGui</string>
 			<bool name="ResetOnSpawn">false</bool>
 			<Ref name="RootLocalizationTable">null</Ref>
 			<int64 name="SourceAssetId">-1</int64>
@@ -81,9 +81,9 @@
 					<bool name="AutoLocalize">true</bool>
 					<token name="AutomaticSize">0</token>
 					<Color3 name="BackgroundColor3">
-						<R>0.0117647061</R>
-						<G>0.988235295</G>
-						<B>0.65882355</B>
+						<R>1</R>
+						<G>1</G>
+						<B>1</B>
 					</Color3>
 					<float name="BackgroundTransparency">0</float>
 					<Color3 name="BorderColor3">
@@ -135,9 +135,9 @@
 						<bool name="AutoLocalize">true</bool>
 						<token name="AutomaticSize">0</token>
 						<Color3 name="BackgroundColor3">
-							<R>0.0117647061</R>
-							<G>0.988235295</G>
-							<B>0.65882355</B>
+							<R>1</R>
+							<G>1</G>
+							<B>1</B>
 						</Color3>
 						<float name="BackgroundTransparency">1</float>
 						<Color3 name="BorderColor3">
@@ -149,7 +149,7 @@
 						<int name="BorderSizePixel">1</int>
 						<bool name="ClipsDescendants">false</bool>
 						<bool name="Draggable">false</bool>
-						<Content name="Image"><url>rbxassetid://7727757600</url></Content>
+						<Content name="Image"><url>rbxassetid://8923515247</url></Content>
 						<Color3 name="ImageColor3">
 							<R>1</R>
 							<G>1</G>
@@ -163,7 +163,7 @@
 							<X>0</X>
 							<Y>0</Y>
 						</Vector2>
-						<float name="ImageTransparency">0.899999976</float>
+						<float name="ImageTransparency">0.850000024</float>
 						<int name="LayoutOrder">0</int>
 						<string name="Name">Background</string>
 						<Ref name="NextSelectionDown">null</Ref>
@@ -204,9 +204,9 @@
 						<BinaryString name="Tags"></BinaryString>
 						<UDim2 name="TileSize">
 							<XS>0</XS>
-							<XO>45</XO>
+							<XO>60</XO>
 							<YS>0</YS>
-							<YO>45</YO>
+							<YO>60</YO>
 						</UDim2>
 						<bool name="Visible">true</bool>
 						<int name="ZIndex">1</int>
@@ -278,11 +278,11 @@
 						<token name="SizeConstraint">0</token>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
-						<string name="Text">Rukkaz Event Setup</string>
+						<string name="Text">PopJam Event Setup</string>
 						<Color3 name="TextColor3">
-							<R>0.0117647061</R>
-							<G>0.988235295</G>
-							<B>0.65882355</B>
+							<R>1</R>
+							<G>1</G>
+							<B>0.498039246</B>
 						</Color3>
 						<bool name="TextScaled">false</bool>
 						<float name="TextSize">28</float>
@@ -325,7 +325,7 @@
 							<int name="BorderSizePixel">1</int>
 							<bool name="ClipsDescendants">false</bool>
 							<bool name="Draggable">false</bool>
-							<Content name="Image"><url>rbxassetid://7727757600</url></Content>
+							<Content name="Image"><url>rbxassetid://8923515247</url></Content>
 							<Color3 name="ImageColor3">
 								<R>1</R>
 								<G>1</G>
@@ -674,7 +674,7 @@
 							<token name="SizeConstraint">0</token>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
-							<string name="Text">Enter the setup code for a Rukkaz event.</string>
+							<string name="Text">Enter the setup code for a PopJam session.</string>
 							<Color3 name="TextColor3">
 								<R>0</R>
 								<G>0</G>
@@ -1393,7 +1393,7 @@
 				<token name="SizeConstraint">0</token>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
-				<string name="Text">Rukkaz Event Host UI</string>
+				<string name="Text">PopJam Event Host UI</string>
 				<Color3 name="TextColor3">
 					<R>1</R>
 					<G>1</G>
