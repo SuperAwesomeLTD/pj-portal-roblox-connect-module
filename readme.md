@@ -1,6 +1,6 @@
-# Rukkaz Roblox Event Host Module
+# PopJam Portal Roblox Connect Module
 
-This module enables your game to host Rukkaz Game With Me events. It facilitates acquisition of an event setup code from a player, usually a Rukkaz moderator. It passes this setup code to the web API to finish setting up the event.
+This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved. The details are then submitted for use during the event.
 
 ## Installation
 
@@ -13,7 +13,7 @@ This module enables your game to host Rukkaz Game With Me events. It facilitates
 
 ## Dependencies
 
-The module depends on the Rukkaz Roblox Web API SDK. It must be available ServerScriptService.
+The module depends on the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand). It must be available ServerScriptService.
 
 ## Development
 
