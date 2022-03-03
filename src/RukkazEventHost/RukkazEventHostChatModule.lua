@@ -1,12 +1,12 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local FUNCTION_ID = "rukkazSetupEvent"
-local MESSAGE_WITH_SETUP_CODE_PATTERN = "^/rukkaz%s+setup%s+(.+)"
-local MESSAGE_PATTERN = "^/rukkaz%s+setup"
+local FUNCTION_ID = "popjamSetupEvent"
+local MESSAGE_WITH_SETUP_CODE_PATTERN = "^/pj%s+setup%s+(.+)"
+local MESSAGE_PATTERN = "^/pj%s+setup"
 
 local RukkazAPI = require(ServerScriptService:WaitForChild("Rukkaz Roblox Web API SDK"):WaitForChild("RukkazAPI"):WaitForChild("Singleton"))
 
-local RukkazEventHost = require(ServerScriptService:WaitForChild("Rukkaz Roblox Event Host Module"):WaitForChild("RukkazEventHost"))
+local RukkazEventHost = require(ServerScriptService:WaitForChild("PopJam Portal Roblox Connect Module"):WaitForChild("RukkazEventHost"))
 
 -- TODO: Add flood checker
 
@@ -23,7 +23,7 @@ return function (ChatService)
 			if player then
 				RukkazEventHost:setupCodePrompt(player)
 			else
-				warn(("RukkazEventHostChatModule: Could not find player for speaker %s"):format(speakerName))
+				warn(("PopJamEventHostChatModule: Could not find player for speaker %s"):format(speakerName))
 			end
 			return true
 		end

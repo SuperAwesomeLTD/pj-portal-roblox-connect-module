@@ -179,7 +179,11 @@ do -- Modal state
 		for _i, text in pairs(buttons) do
 			assert(typeof(text) == "string", "value should be a string")
 			local button = self.bModalButtonPrefab:Clone()
-			button.Text = text
+			button.Text = text:upper()
+			button.Size = UDim2.new(
+				1 / #buttons, -10,
+				self.bModalButtonPrefab.Size.Y.Scale, self.bModalButtonPrefab.Size.Y.Offset
+			)
 			button.Parent = self.modalButtonsContainer
 			self._modalButtons[button] = button.Activated:Connect(function ()
 				if text == "Close" then

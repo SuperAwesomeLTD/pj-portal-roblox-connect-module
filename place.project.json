@@ -5,7 +5,7 @@
 		"ServerScriptService": {
 			"$className": "ServerScriptService",
 			"$ignoreUnknownInstances": true,
-			"Rukkaz Roblox Event Host Module" : {
+			"PopJam Portal Roblox Connect Module" : {
 				"$path": "src",
 				"$ignoreUnknownInstances": false
 			}

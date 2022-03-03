@@ -769,7 +769,7 @@
 								<bool name="ClearTextOnFocus">true</bool>
 								<bool name="ClipsDescendants">false</bool>
 								<bool name="Draggable">false</bool>
-								<token name="Font">34</token>
+								<token name="Font">17</token>
 								<int name="LayoutOrder">10</int>
 								<float name="LineHeight">1</float>
 								<int name="MaxVisibleGraphemes">-1</int>
@@ -780,9 +780,9 @@
 								<Ref name="NextSelectionRight">null</Ref>
 								<Ref name="NextSelectionUp">null</Ref>
 								<Color3 name="PlaceholderColor3">
-									<R>0.301960796</R>
-									<G>0.286274523</G>
-									<B>0.517647088</B>
+									<R>0.396078438</R>
+									<G>0.396078438</G>
+									<B>0.717647076</B>
 								</Color3>
 								<string name="PlaceholderText">ENTER CODE HERE</string>
 								<UDim2 name="Position">
@@ -980,7 +980,7 @@
 								<int name="BorderSizePixel">1</int>
 								<bool name="ClipsDescendants">false</bool>
 								<bool name="Draggable">false</bool>
-								<token name="Font">34</token>
+								<token name="Font">17</token>
 								<int name="LayoutOrder">10</int>
 								<float name="LineHeight">1</float>
 								<int name="MaxVisibleGraphemes">-1</int>
@@ -1263,7 +1263,7 @@
 								<int name="BorderSizePixel">1</int>
 								<bool name="ClipsDescendants">false</bool>
 								<bool name="Draggable">false</bool>
-								<token name="Font">34</token>
+								<token name="Font">17</token>
 								<int name="LayoutOrder">10</int>
 								<float name="LineHeight">1</float>
 								<int name="MaxVisibleGraphemes">-1</int>
@@ -1500,7 +1500,7 @@
 				<int name="BorderSizePixel">1</int>
 				<bool name="ClipsDescendants">false</bool>
 				<bool name="Draggable">false</bool>
-				<token name="Font">42</token>
+				<token name="Font">41</token>
 				<int name="LayoutOrder">0</int>
 				<float name="LineHeight">1</float>
 				<int name="MaxVisibleGraphemes">-1</int>
