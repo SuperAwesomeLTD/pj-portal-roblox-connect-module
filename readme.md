@@ -15,8 +15,8 @@ This module enables your game to host PopJam jam sessions. It facilitates acquis
    ![Allowing HTTP requests in Game Settings](img/allow-http-requests.png)
    - For unpublished games, enter this into the Command Bar instead:
    ```lua
-game:GetService("HttpService").HttpEnabled = true
-```
+   game:GetService("HttpService").HttpEnabled = true
+   ```
 3. Insert the model into the place using one of the following:
    - If you download the model file from [releases](https://github.com/SuperAwesomeLTD/pj-portal-roblox-connect-module/releases/latest): right-click ServerScriptService and select **Insert from File...**
    - If you took the Model on Roblox.com: insert it using the [Toolbox](https://developer.roblox.com/en-us/resources/studio/Toolbox)
