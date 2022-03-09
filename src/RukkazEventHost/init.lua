@@ -3,10 +3,24 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
 local Chat = game:GetService("Chat")
 
-local RukkazAPI = require(ServerScriptService:WaitForChild("Rukkaz Roblox Web API SDK"):WaitForChild("RukkazAPI"):WaitForChild("Singleton"))
+local Promise = require(
+	script
+	:WaitForChild("Client")
+	:WaitForChild("lib")
+	:WaitForChild("Promise")
+)
+
+local RukkazAPI = require(
+	script
+	:WaitForChild("lib")
+	:WaitForChild("Rukkaz Roblox Web API SDK")
+	:WaitForChild("RukkazAPI")
+	:WaitForChild("Singleton")
+)
 
 local RukkazEventHost = {}
 RukkazEventHost.__index = RukkazEventHost
+RukkazEventHost.RukkazAPI = RukkazAPI
 
 function RukkazEventHost.new()
 	local self = setmetatable({
@@ -46,8 +60,10 @@ end
 function RukkazEventHost:injectChatModule()
 	assert(not self.chatModuleInjected, "chat module already injected")
 	local chatModulesFolder = self:getChatModulesFolder()
-	local chatModule = self.chatModulePrefab:Clone()
-	chatModule.Parent = chatModulesFolder
+	if not chatModulesFolder:FindFirstChild(self.chatModulePrefab.Name) then
+		local chatModule = self.chatModulePrefab:Clone()
+		chatModule.Parent = chatModulesFolder
+	end
 	self.chatModuleInjected = true
 end
 
@@ -58,7 +74,17 @@ end
 function RukkazEventHost:onSetupCodeSubmitted(_player, setupCode, ...)
 	assert(typeof(setupCode) == "string" and setupCode:len() > 0 and setupCode:len() < 1024, "Setup code must be a nonempty string")
 	assert(select("#", ...) == 0, "Too many arguments")
-	return RukkazAPI:setupEvent(setupCode):await()
+	return RukkazAPI:setupEvent(setupCode):catch(function (err)
+		warn(tostring(err))
+		if tostring(err):lower():match("http requests are not enabled") then
+			warn("Did you forget to enable HttpService.HttpEnabled?")
+			return Promise.reject("HttpService.HttpEnabled is false")
+		elseif err == "ErrNoMatchingEvent" then
+			return Promise.reject("The setup code you provided doesn't match any event.")
+		else
+			return Promise.reject("Unspecified error")
+		end
+	end):await()
 end
 
 return RukkazEventHost.new()

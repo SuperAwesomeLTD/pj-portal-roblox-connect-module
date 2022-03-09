@@ -1,4 +1,4 @@
-OUTPUT = Rukkaz-Roblox-Event-Host-Module.rbxmx
+OUTPUT = PopJam-Portal-Roblox-Connect-Module.rbxmx
 
 ROJO = rojo
 ROJO_PROJECT = default.project.json

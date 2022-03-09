@@ -1,11 +1,11 @@
 {
-	"name": "Rukkaz Roblox Event Host Module",
+	"name": "PopJam Portal Roblox Connect Module",
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {
 			"$className": "ServerScriptService",
 			"$ignoreUnknownInstances": true,
-			"Rukkaz Roblox Event Host Module" : {
+			"PopJam Portal Roblox Connect Module" : {
 				"$path": "src",
 				"$ignoreUnknownInstances": false
 			}
