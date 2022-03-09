@@ -1,3 +1,6 @@
 [submodule "lib/roblox-lua-promise"]
 	path = lib/roblox-lua-promise
 	url = https://github.com/evaera/roblox-lua-promise
+[submodule "lib/pj-portal-roblox-web-api-sdk"]
+	path = lib/pj-portal-roblox-web-api-sdk
+	url = git@github.com:SuperAwesomeLTD/pj-portal-roblox-web-api-sdk.git

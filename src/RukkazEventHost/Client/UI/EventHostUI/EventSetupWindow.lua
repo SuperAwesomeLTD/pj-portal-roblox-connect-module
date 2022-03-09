@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local rukkazEventHost = ReplicatedStorage:WaitForChild("RukkazEventHost")
 local setupCodeRemotes = rukkazEventHost:WaitForChild("Remotes"):WaitForChild("SetupCode")
 
@@ -114,7 +115,10 @@ do -- Enter code state
 				if results[2] then
 					self:showModal("Success! Your event is all set up now.", nil, {"Close"}, true)
 				else
-					self:showModal("Something went wrong while setting up your event.", nil, {"Try again", "Close"}, true)
+					self:showModal(
+						typeof(results[3]) == "string" and results[3] or "Something went wrong while setting up your event.",
+						nil, {"Try again", "Close"}, true
+					)
 				end
 			else
 				self:showModal("An error occured while submitting the setup code.", nil, {"Try again", "Close"}, true)

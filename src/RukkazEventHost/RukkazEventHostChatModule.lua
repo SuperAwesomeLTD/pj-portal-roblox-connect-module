@@ -4,7 +4,11 @@ local FUNCTION_ID = "popjamSetupEvent"
 local MESSAGE_WITH_SETUP_CODE_PATTERN = "^/pj%s+setup%s+(.+)"
 local MESSAGE_PATTERN = "^/pj%s+setup"
 
-local RukkazAPI = require(ServerScriptService:WaitForChild("Rukkaz Roblox Web API SDK"):WaitForChild("RukkazAPI"):WaitForChild("Singleton"))
+local RukkazEventHost = require(
+	ServerScriptService
+	:WaitForChild("PopJam Portal Roblox Connect Module")
+	:WaitForChild("RukkazEventHost")
+)
 
 local RukkazEventHost = require(ServerScriptService:WaitForChild("PopJam Portal Roblox Connect Module"):WaitForChild("RukkazEventHost"))
 
@@ -14,7 +18,7 @@ return function (ChatService)
 	ChatService:RegisterProcessCommandsFunction(FUNCTION_ID, function (speakerName, message, _channelName)
 		local setupCode = message:match(MESSAGE_WITH_SETUP_CODE_PATTERN)
 		if setupCode then
-			RukkazAPI:setupEvent(setupCode)
+			RukkazEventHost.RukkazAPI:setupEvent(setupCode)
 			return true
 		end
 		if message:match(MESSAGE_PATTERN) then
