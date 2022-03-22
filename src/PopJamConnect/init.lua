@@ -18,18 +18,18 @@ local RukkazAPI = require(
 	:WaitForChild("Singleton")
 )
 
-local RukkazEventHost = {}
-RukkazEventHost.__index = RukkazEventHost
-RukkazEventHost.VERSION = "1.2.0"
-RukkazEventHost.RukkazAPI = RukkazAPI
+local PopJamConnect = {}
+PopJamConnect.__index = PopJamConnect
+PopJamConnect.VERSION = "1.2.0"
+PopJamConnect.RukkazAPI = RukkazAPI
 
-function RukkazEventHost.new()
+function PopJamConnect.new()
 	local self = setmetatable({
 		chatModuleInjected = false;
-		chatModulePrefab = script.RukkazEventHostChatModule;
+		chatModulePrefab = script.PopJamConnectChatModule;
 		clientContent = script.Client;
 		starterPlayerScripts = script.StarterPlayerScripts;
-	}, RukkazEventHost)
+	}, PopJamConnect)
 	self.remotes = self.clientContent.Remotes
 	self.remotes.SetupCode.Submit.OnServerInvoke = function (...)
 		return self:onSetupCodeSubmitted(...)
@@ -37,28 +37,28 @@ function RukkazEventHost.new()
 	return self
 end
 
-function RukkazEventHost:main()
+function PopJamConnect:main()
 	self:replicateClientContent()
 	self:injectChatModule()
 	self:setupStarterPlayerScripts()
 end
 
-function RukkazEventHost:setupStarterPlayerScripts()
+function PopJamConnect:setupStarterPlayerScripts()
 	for _, child in pairs(self.starterPlayerScripts:GetChildren()) do
 		child.Parent = StarterPlayerScripts
 	end
 end
 
-function RukkazEventHost:replicateClientContent()
+function PopJamConnect:replicateClientContent()
 	self.clientContent.Name = "RukkazEventHost"
 	self.clientContent.Parent = ReplicatedStorage
 end
 
-function RukkazEventHost:getChatModulesFolder()
+function PopJamConnect:getChatModulesFolder()
 	return Chat:WaitForChild("ChatModules")
 end
 
-function RukkazEventHost:injectChatModule()
+function PopJamConnect:injectChatModule()
 	assert(not self.chatModuleInjected, "chat module already injected")
 	local chatModulesFolder = self:getChatModulesFolder()
 	if not chatModulesFolder:FindFirstChild(self.chatModulePrefab.Name) then
@@ -68,11 +68,11 @@ function RukkazEventHost:injectChatModule()
 	self.chatModuleInjected = true
 end
 
-function RukkazEventHost:setupCodePrompt(player)
+function PopJamConnect:setupCodePrompt(player)
 	self.remotes.SetupCode.Prompt:FireClient(player)
 end
 
-function RukkazEventHost:onSetupCodeSubmitted(_player, setupCode, ...)
+function PopJamConnect:onSetupCodeSubmitted(_player, setupCode, ...)
 	assert(typeof(setupCode) == "string" and setupCode:len() > 0 and setupCode:len() < 1024, "Setup code must be a nonempty string")
 	assert(select("#", ...) == 0, "Too many arguments")
 	return RukkazAPI:setupEvent(setupCode):catch(function (err)
@@ -88,4 +88,4 @@ function RukkazEventHost:onSetupCodeSubmitted(_player, setupCode, ...)
 	end):await()
 end
 
-return RukkazEventHost.new()
+return PopJamConnect.new()

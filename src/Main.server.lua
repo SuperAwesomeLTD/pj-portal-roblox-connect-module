@@ -1,2 +1,2 @@
-local RukkazEventHost = require(script.Parent:WaitForChild("RukkazEventHost"))
-RukkazEventHost:main()
+local PopJamConnect = require(script.Parent:WaitForChild("PopJamConnect"))
+PopJamConnect:main()
