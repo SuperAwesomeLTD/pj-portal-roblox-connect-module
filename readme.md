@@ -53,6 +53,43 @@ More details about installation can be found in the [INSTALL](src/RukkazEventHos
 
 &dagger;Don't click Play (F5): sometimes when testing in this way, the local player arrives before the module initializes. This can cause friction when testing.
 
+## Configuration and Special Behavior
+
+### Customizing Event Target Place ID
+
+When setting up an event, the module assumes that the current place ([game.PlaceId](https://developer.roblox.com/en-us/api-reference/property/DataModel/PlaceId)) is the one to which event guests should be teleported. To change this, call `PopJamConnect.RukkazAPI:setEventHostPlaceIdCallback(func)`, where `func` is a function that returns the place ID to which guests must be sent. This must be done before calling `PopJamConnect:main`. See the [Main](src/Main.server.lua) script.
+
+### Games which Teleport Players
+
+During an event, guests are teleported to a private server created with [TeleportService:ReserveServer](https://developer.roblox.com/en-us/api-reference/function/TeleportService/ReserveServer) of the target game. So, if the target game needs to teleport players to another place, special steps must be taken to return guests back to the event private server. See **Data Store Usage** below.
+
+## Data Store Usage
+
+During event setup, the following data stores are used to save teleport data:
+
+### `PopJamEventId`
+
+Maps the private server ID (key) to the PopJam event ID (string). Used by `PopJamConnect:getHostedEventIdAsync` to detect if the current server is hosting a PopJam event by looking up its own private server ID.
+
+### `PopJamTeleportDetails`
+
+Maps a PopJam event ID (key) to a table containing private server teleport details with the following structure:
+
+```plain
+{
+   "startPlaceId": "123456789",
+   "placeIds": {
+      "123456789": {
+         "privateServerId": "...",
+         "privateServerAccessCode": "..."
+      },
+      ...
+   }
+}
+```
+
+This allows looking up the private server id and access codes generated during event setup. It can be used to return players to the original private server if they were teleported away. In the future, it will also be used to store additional teleport details for private servers reserved for use during events.
+
 ## Dependencies
 
 The dependencies of this module are included within it, which is only the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand).
