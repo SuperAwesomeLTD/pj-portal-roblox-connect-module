@@ -4,7 +4,7 @@ local PopJamConnect = require(script.Parent:WaitForChild("PopJamConnect"))
 -- that is currently being set up. The function should return the place ID
 -- to which event guests must be teleported. The place ID is then passed to
 -- TeleportService:ReserveServer
-local function getHostPlaceIdCallback(eventId)
+local function getHostPlaceIdCallback(_eventId)
 	return game.PlaceId
 end
 PopJamConnect.RukkazAPI:setEventHostPlaceIdCallback(getHostPlaceIdCallback)

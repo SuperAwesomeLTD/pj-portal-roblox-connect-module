@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local rukkazEventHost = ReplicatedStorage:WaitForChild("RukkazEventHost")
 local setupCodeRemotes = rukkazEventHost:WaitForChild("Remotes"):WaitForChild("SetupCode")
 

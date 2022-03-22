@@ -1,4 +1,3 @@
-local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
@@ -112,7 +111,7 @@ function PopJamConnect:getHostedEventIdAsync()
 			else
 				print(("Looking up if PrivateServerId=%s is hosting a PopJam Event"):format(privateServerId))
 				local key = tostring(privateServerId)
-				return getAsyncPromise(dataStore, key):andThen(function (payload, dataStoreKeyInfo)
+				return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
 					if payload == nil then
 						return Promise.resolve(PopJamConnect.NO_EVENT)
 					end
@@ -192,7 +191,7 @@ function PopJamConnect:persistTeleportDetails(placeId, eventId, privateServerId,
 		local updateAsyncPromise = Promise.promisify(dsEventId.UpdateAsync)
 		local key = tostring(privateServerId)
 		print("Saving privateServerId => eventId")
-		return updateAsyncPromise(dsEventId, key, function (payload, dataStoreKeyInfo)
+		return updateAsyncPromise(dsEventId, key, function (payload, _dataStoreKeyInfo)
 			-- Ensure an existing event ID is not being overwritten if it is different
 			assert(payload == nil or payload == eventId, ("Unexpected event ID for privateServerId %s: %s"):format(privateServerId, tostring(payload)))
 			payload = eventId
@@ -207,7 +206,7 @@ function PopJamConnect:persistTeleportDetails(placeId, eventId, privateServerId,
 		local dsTeleportDetails = self:getTeleportDetailsDataStore()
 		local updateAsyncPromise = Promise.promisify(dsTeleportDetails.UpdateAsync)
 		local key = tostring(eventId)
-		return updateAsyncPromise(dsTeleportDetails, key, function (payload, dataStoreKeyInfo)
+		return updateAsyncPromise(dsTeleportDetails, key, function (payload, _dataStoreKeyInfo)
 			payload = payload or {}
 			if isStartPlace then
 				payload["startPlaceId"] = placeId
