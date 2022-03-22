@@ -1,4 +1,5 @@
-OUTPUT = PopJam-Portal-Roblox-Connect-Module.rbxmx
+VERSION = 1.2.0
+OUTPUT = PopJam-Portal-Roblox-Connect-Module-v$(VERSION).rbxmx
 
 ROJO = rojo
 ROJO_PROJECT = default.project.json

@@ -20,6 +20,7 @@ local RukkazAPI = require(
 
 local RukkazEventHost = {}
 RukkazEventHost.__index = RukkazEventHost
+RukkazEventHost.VERSION = "1.2.0"
 RukkazEventHost.RukkazAPI = RukkazAPI
 
 function RukkazEventHost.new()
