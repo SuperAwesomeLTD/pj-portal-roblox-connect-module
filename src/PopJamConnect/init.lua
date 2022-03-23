@@ -1,8 +1,9 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
-local Chat = game:GetService("Chat")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
 local DataStoreService = game:GetService("DataStoreService")
+local Chat = game:GetService("Chat")
+local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
 
 local Promise = require(
 	script
@@ -21,7 +22,7 @@ local RukkazAPI = require(
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.2.0"
+PopJamConnect.VERSION = "1.2.2"
 PopJamConnect.RukkazAPI = RukkazAPI
 PopJamConnect.DS_PREFIX = "PopJam"
 PopJamConnect.DS_EVENT_ID = PopJamConnect.DS_PREFIX .. "EventId" -- "PopJamEventId"
@@ -86,6 +87,8 @@ function PopJamConnect.new()
 		end
 	end)
 	self._hostedEventId = PopJamConnect.EVENT_UNKNOWN
+	self._teleportOptions = {}
+	self._teleportOptionsPromises = {}
 	return self
 end
 
@@ -93,6 +96,80 @@ function PopJamConnect:main()
 	self:replicateClientContent()
 	self:injectChatModule()
 	self:setupStarterPlayerScripts()
+end
+
+local reserveServerPromise = Promise.promisify(function (...) return TeleportService:ReserveServer(...) end)
+
+function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
+	return self:getHostedEventIdAsync():andThen(function (eventId)
+		if eventId == PopJamConnect.NO_EVENT then
+			return Promise.reject()
+		end
+		local dataStore = self:getTeleportDetailsDataStore()
+		local getAsyncPromise = Promise.promisify(dataStore.GetAsync)
+		local key = tostring(eventId)
+		return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
+			print(self.DS_TELEPORT_DETAILS, "GetAsync", key, payload)
+
+			-- Safely access payload["placeIds"][placeId]
+			local placeIdTeleportDetails = ((payload or {})["placeIds"] or {})[tostring(placeId)] or {}
+
+			-- Promise that resolves with the privateServerAccessCode and privateServerId
+			local promise
+			if placeIdTeleportDetails["privateServerAccessCode"] and placeIdTeleportDetails["privateServerId"] then
+				-- Already known, just resolve immediately
+				promise = Promise.resolve(placeIdTeleportDetails["privateServerAccessCode"], placeIdTeleportDetails["privateServerId"])
+			else
+				-- Must be reserved, persisted, then resolved
+				promise = reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
+					print("ReserveServer", privateServerAccessCode, privateServerId)
+					return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, false):andThen(function ()
+						return Promise.resolve(privateServerAccessCode, privateServerId)
+					end)
+				end)
+			end
+
+			return promise
+		end)
+	end)
+end
+
+function PopJamConnect:getTeleportOptionsForPlaceIdAsync(placeId)
+	-- Cache
+	if self._teleportOptions[placeId] then
+		return Promise.resolve(self._teleportOptions[placeId])
+	end
+	-- Return any in-progress promise
+	if self._teleportOptionsPromises[placeId] then
+		return self._teleportOptionsPromises[placeId]
+	end
+	local promise = self:getHostedEventIdAsync():andThen(function (eventId)
+		local teleportOptions = Instance.new("TeleportOptions")
+
+		if eventId == PopJamConnect.NO_EVENT then
+			print("This server is not hosting a PopJam event; returning plain TeleportOptions")
+			return Promise.resolve(teleportOptions)
+		end
+
+		return self:getTeleportDetailsForPlaceIdAsync(placeId):andThen(function (privateServerAccessCode, privateServerId)
+			print("getTeleportOptionsForPlaceIdAsync", placeId, privateServerId, privateServerAccessCode)
+			teleportOptions.ReservedServerAccessCode = privateServerAccessCode
+			return Promise.resolve(teleportOptions)
+		end)
+	end):tap(function (teleportOptions)
+		-- Cache result
+		self._teleportOptions[placeId] = teleportOptions
+	end)
+	-- Cache promise, forget once resolved
+	self._teleportOptionsPromises[placeId] = promise
+	promise:finally(function ()
+		self._teleportOptionsPromises[placeId] = nil
+	end)
+	return promise
+end
+
+function PopJamConnect:getTeleportOptionsForPlaceId(...)
+	return self:getTeleportOptionsForPlaceIdAsync(...):expect()
 end
 
 function PopJamConnect:getHostedEventIdAsync()
@@ -112,6 +189,8 @@ function PopJamConnect:getHostedEventIdAsync()
 				print(("Looking up if PrivateServerId=%s is hosting a PopJam Event"):format(privateServerId))
 				local key = tostring(privateServerId)
 				return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
+					print(self.DS_EVENT_ID, "GetAsync", key)
+
 					if payload == nil then
 						return Promise.resolve(PopJamConnect.NO_EVENT)
 					end
@@ -132,7 +211,7 @@ function PopJamConnect:getHostedEventIdAsync()
 end
 
 function PopJamConnect:getHostedEventId()
-	return self:getHostedEventIdAsync():await()
+	return self:getHostedEventIdAsync():expect()
 end
 
 function PopJamConnect:isHostingEventAsync()
@@ -183,25 +262,28 @@ function PopJamConnect:setupCodePrompt(player)
 	self.remotes.SetupCode.Prompt:FireClient(player)
 end
 
+function PopJamConnect:persistEventId(privateServerId, eventId)
+	local dsEventId = self:getEventIdDataStore()
+	local updateAsyncPromise = Promise.promisify(dsEventId.UpdateAsync)
+	local key = tostring(privateServerId)
+	print("Saving privateServerId => eventId")
+
+	return updateAsyncPromise(dsEventId, key, function (payload, _dataStoreKeyInfo)
+		-- Ensure an existing event ID is not being overwritten if it is different
+		assert(payload == nil or payload == eventId, ("Unexpected event ID for privateServerId %s: %s"):format(privateServerId, tostring(payload)))
+		payload = eventId
+
+		-- Log for debugging
+		print(self.DS_EVENT_ID, "UpdateAsync", key, payload)
+
+		return eventId, nil, nil
+	end)
+end
+
 function PopJamConnect:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, isStartPlace)
 	-- First, save private server id => eventId
 	-- Allows the private server to understand which event it is hosting
-	return Promise.resolve():andThen(function ()
-		local dsEventId = self:getEventIdDataStore()
-		local updateAsyncPromise = Promise.promisify(dsEventId.UpdateAsync)
-		local key = tostring(privateServerId)
-		print("Saving privateServerId => eventId")
-		return updateAsyncPromise(dsEventId, key, function (payload, _dataStoreKeyInfo)
-			-- Ensure an existing event ID is not being overwritten if it is different
-			assert(payload == nil or payload == eventId, ("Unexpected event ID for privateServerId %s: %s"):format(privateServerId, tostring(payload)))
-			payload = eventId
-
-			-- Log for debugging
-			print("UpdateAsync", self.DS_EVENT_ID, key, payload)
-
-			return eventId, nil, nil
-		end)
-	end):andThen(function ()
+	return self:persistEventId(privateServerId, eventId):andThen(function ()
 		print("Saving eventId => teleportDetails")
 		local dsTeleportDetails = self:getTeleportDetailsDataStore()
 		local updateAsyncPromise = Promise.promisify(dsTeleportDetails.UpdateAsync)
@@ -221,7 +303,7 @@ function PopJamConnect:persistTeleportDetails(placeId, eventId, privateServerId,
 			payload["placeIds"][tostring(placeId)] = placeIdTeleportDetails
 
 			-- Log for debugging
-			print("UpdateAsync", self.DS_TELEPORT_DETAILS, key, payload)
+			print(self.DS_TELEPORT_DETAILS, "UpdateAsync", key, payload)
 
 			return payload, nil, nil
 		end)
