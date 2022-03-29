@@ -100,7 +100,9 @@ function PopJamConnect:main()
 	self:setupStarterPlayerScripts()
 end
 
-local reserveServerPromise = Promise.promisify(function (...) return TeleportService:ReserveServer(...) end)
+local reserveServerPromise = Promise.promisify(function (...)
+	return TeleportService:ReserveServer(...)
+end)
 
 function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
 	return self:getHostedEventIdAsync():andThen(function (eventId)
