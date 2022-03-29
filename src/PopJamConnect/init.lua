@@ -78,8 +78,9 @@ function PopJamConnect.new()
 	self.remotes.SetupCode.Submit.OnServerInvoke = function (...)
 		return self:onSetupCodeSubmitted(...)
 	end
-	self.dsEventId = DataStoreService:GetDataStore(PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
-	self.dsTeleportDetails = DataStoreService:GetDataStore(PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
+	local _
+	_, self.dsEventId = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
+	_, self.dsTeleportDetails = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
 	self:getHostedEventIdAsync():andThen(function (eventId)
 		if eventId ~= PopJamConnect.NO_EVENT then
 			print(("This server is hosting PopJam eventId: %s"):format(eventId))
@@ -227,11 +228,11 @@ function PopJamConnect:isHostingEvent()
 end
 
 function PopJamConnect:getEventIdDataStore()
-	return self.dsEventId
+	return assert(self.dsEventId, "DataStores are not enabled")
 end
 
 function PopJamConnect:getTeleportDetailsDataStore()
-	return self.dsTeleportDetails
+	return assert(self.dsTeleportDetails, "DataStores are not enabled")
 end
 
 function PopJamConnect:setupStarterPlayerScripts()
