@@ -24,6 +24,7 @@ local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
 PopJamConnect.VERSION = "1.2.2"
 PopJamConnect.RukkazAPI = RukkazAPI
+PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
 PopJamConnect.DS_EVENT_ID = PopJamConnect.DS_PREFIX .. "EventId" -- "PopJamEventId"
 PopJamConnect.DS_TELEPORT_DETAILS = PopJamConnect.DS_PREFIX .. "TeleportDetails" -- "PopJamTeleportDetails"
