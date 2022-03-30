@@ -1,4 +1,4 @@
-VERSION = 1.2.2
+VERSION = 1.2.3
 OUTPUT = PopJam-Portal-Roblox-Connect-Module-v$(VERSION).rbxmx
 
 ROJO = rojo

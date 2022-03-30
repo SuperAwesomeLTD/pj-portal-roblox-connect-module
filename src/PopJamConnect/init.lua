@@ -22,7 +22,7 @@ local RukkazAPI = require(
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.2.2"
+PopJamConnect.VERSION = "1.2.3"
 PopJamConnect.RukkazAPI = RukkazAPI
 PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
