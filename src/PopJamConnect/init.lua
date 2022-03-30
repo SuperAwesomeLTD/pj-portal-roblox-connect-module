@@ -358,7 +358,7 @@ function PopJamConnect:generateMockPopJamEventId(player)
 	return 'mock-' .. player.UserId .. "-" .. math.random(1000,9999) .. "-" .. math.random(1000,9999)
 end
 
-PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT = "ERrCannotCreateMockEvent"
+PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT = "ErrCannotCreateMockEvent"
 function PopJamConnect:validateSetupCode(setupCode, player)
 	if self:isMockEventSetupCode(setupCode) then
 		return self:hasMockEventPermissionsAsync(player):andThen(function (hasMockEventPermissions)
