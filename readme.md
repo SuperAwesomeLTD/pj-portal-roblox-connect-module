@@ -48,7 +48,7 @@ More details about installation can be found in the [INSTALL](src/RukkazEventHos
 
    ![Setup Window](img/ui.png)
 
-4. Enter an arbitrary 6-character setup code, which should be rejected: "The setup code you provided doesn't match any event."
+4. Enter `000000` for the setup code to create a mock event.
 
 5. Publish the game and repeat the process in a live Roblox game server.
 
