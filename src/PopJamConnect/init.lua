@@ -22,8 +22,9 @@ local RukkazAPI = require(
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.2.2"
+PopJamConnect.VERSION = "1.2.3"
 PopJamConnect.RukkazAPI = RukkazAPI
+PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
 PopJamConnect.DS_EVENT_ID = PopJamConnect.DS_PREFIX .. "EventId" -- "PopJamEventId"
 PopJamConnect.DS_TELEPORT_DETAILS = PopJamConnect.DS_PREFIX .. "TeleportDetails" -- "PopJamTeleportDetails"
@@ -51,7 +52,12 @@ local function warn(...)
 end
 
 function PopJamConnect:isDebugMode()
-	return self.config:GetAttribute(self.ATTR_DEBUG_MODE)
+	return self.config:GetAttribute(self.ATTR_DEBUG_MODE) or RunService:IsStudio()
+end
+
+function PopJamConnect:setDebugMode(isDebugMode)
+	assert(typeof(isDebugMode) == "boolean", "boolean expected")
+	return self.config:SetAttribute(self.ATTR_DEBUG_MODE, isDebugMode)
 end
 
 function PopJamConnect:getCurrentPrivateServerId()
@@ -66,6 +72,12 @@ function PopJamConnect:getCurrentPrivateServerId()
 	return privateServerId
 end
 
+function PopJamConnect:overridePrivateServerId(privateServerId)
+	assert(typeof(privateServerId) == "string" or typeof(privateServerId) == "nil", "string or nil expected")
+	self.config:SetAttribute(self.ATTR_PRIVATE_SERVER_ID_OVERRIDE, privateServerId)
+	print("PrivateServerId override set to " .. (privateServerId or "nil"))
+end
+
 function PopJamConnect.new()
 	local self = setmetatable({
 		chatModuleInjected = false;
@@ -77,8 +89,9 @@ function PopJamConnect.new()
 	self.remotes.SetupCode.Submit.OnServerInvoke = function (...)
 		return self:onSetupCodeSubmitted(...)
 	end
-	self.dsEventId = DataStoreService:GetDataStore(PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
-	self.dsTeleportDetails = DataStoreService:GetDataStore(PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
+	local _
+	_, self.dsEventId = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
+	_, self.dsTeleportDetails = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
 	self:getHostedEventIdAsync():andThen(function (eventId)
 		if eventId ~= PopJamConnect.NO_EVENT then
 			print(("This server is hosting PopJam eventId: %s"):format(eventId))
@@ -98,7 +111,9 @@ function PopJamConnect:main()
 	self:setupStarterPlayerScripts()
 end
 
-local reserveServerPromise = Promise.promisify(function (...) return TeleportService:ReserveServer(...) end)
+local reserveServerPromise = Promise.promisify(function (...)
+	return TeleportService:ReserveServer(...)
+end)
 
 function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
 	return self:getHostedEventIdAsync():andThen(function (eventId)
@@ -226,11 +241,11 @@ function PopJamConnect:isHostingEvent()
 end
 
 function PopJamConnect:getEventIdDataStore()
-	return self.dsEventId
+	return assert(self.dsEventId, "DataStores are not enabled")
 end
 
 function PopJamConnect:getTeleportDetailsDataStore()
-	return self.dsTeleportDetails
+	return assert(self.dsTeleportDetails, "DataStores are not enabled")
 end
 
 function PopJamConnect:setupStarterPlayerScripts()

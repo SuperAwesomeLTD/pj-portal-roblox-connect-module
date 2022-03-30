@@ -1,3 +1,11 @@
+# selene
+
+roblox.toml
+
+# Roblox lock files
+
+*.lock
+
 # Build artifacts
 
 PopJam-Portal-Roblox-Connect-Module-v*.rbxmx

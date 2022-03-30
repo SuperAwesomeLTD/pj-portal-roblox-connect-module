@@ -1,4 +1,4 @@
-# PopJam Portal Roblox Connect Module v1.2.2
+# PopJam Portal Roblox Connect Module v1.2.3
 
 This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved. The details are then submitted for use during the event.
 
@@ -16,6 +16,7 @@ This module enables your game to host PopJam jam sessions. It facilitates acquis
 
    ![Allowing HTTP requests in Game Settings](img/allow-http-requests.png)
    - For unpublished games, enter this into the Command Bar instead:
+
    ```lua
    game:GetService("HttpService").HttpEnabled = true
    ```
@@ -35,7 +36,7 @@ More details about installation can be found in the [INSTALL](src/RukkazEventHos
 
 ## Testing
 
-1. Under the **Test** tab, click **Start** (F7)<sup>&dagger;</sup>
+1. Under the **Test** tab, click **Start** (F7)&dagger;
 
    ![Starting a test server](img/start-test.png)
 
