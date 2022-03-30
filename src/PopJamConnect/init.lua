@@ -339,10 +339,10 @@ function PopJamConnect:onSetupCodeSubmitted(_player, setupCode, ...)
 		if tostring(err):lower():match("http requests are not enabled") then
 			warn("Did you forget to enable HttpService.HttpEnabled?")
 			return Promise.reject("HttpService.HttpEnabled is false")
-		elseif err == "ErrNoMatchingEvent" then
+		elseif err == RukkazAPI.ERR_NO_MATCHING_EVENT then
 			return Promise.reject("The setup code you provided doesn't match any event.")
 		else
-			return Promise.reject("Unspecified error")
+			return Promise.reject("Error - check developer console.")
 		end
 	end):await()
 end
