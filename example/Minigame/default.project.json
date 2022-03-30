@@ -1,0 +1,56 @@
+{
+	"name": "Minigame",
+	"tree": {
+		"$className": "DataModel",
+		
+		"ServerScriptService": {
+			"PopJam Portal Roblox Connect Module": {
+				"$path": "../../src"
+			},
+			"TeleportHelpers": {
+				"$path": "../shared/TeleportHelpers.lua"
+			},
+			"TeleportToLobby": {
+				"$path": "../shared/GoToLobby.server.lua"
+			},
+			"PrivateServerIdReplicator": {
+				"$path": "../shared/PrivateServerIdReplicator"
+			}
+		},
+		"Workspace": {
+			"$ignoreUnknownInstances": true,
+			"$path": "src/Workspace"
+		},
+		"ReplicatedStorage": {
+			"PlaceIds": {
+				"$path": "../shared/PlaceIds.lua"
+			}
+		},
+		"Lighting": {
+			"$path": "../shared/Lighting",
+			"$properties": {
+				"ClockTime": 20
+			}
+		},
+		"Chat": {
+			"$className": "Chat",
+			"ChatModules": {
+				"$className": "Folder",
+				"InsertDefaultModules": {
+					"$className": "BoolValue",
+					"$properties": {
+						"Value": true
+					}
+				},
+				"PopJamConnectChatModule": {
+					"$path": "../../src/PopJamConnect/PopJamConnectChatModule.lua"
+				}
+			}
+		},
+		"HttpService": {
+			"$properties": {
+				"HttpEnabled": true
+			}
+		}
+	}
+}

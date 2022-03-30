@@ -1,6 +1,6 @@
 # PopJam Portal Roblox Connect Module v1.2.3
 
-This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved. The details are then submitted for use during the event.
+This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved just for the event! Finally, the teleport details are submitted to PopJam for use in the [PopJam Portal](https://www.roblox.com/games/7649372402)!
 
 [![Download](img/download.png)](https://github.com/SuperAwesomeLTD/pj-portal-roblox-connect-module/releases)
 
@@ -30,7 +30,7 @@ This module enables your game to host PopJam jam sessions. It facilitates acquis
 
    ![Installation](img/install.png)
 
-5. That's it! Continue to "Testing" below.
+5. That's it! Continue to "Testing" below. If the game teleports players, you must make some changes to your teleport code.
 
 More details about installation can be found in the [INSTALL](src/RukkazEventHost/INSTALL.lua) ModuleScript.
 
@@ -62,11 +62,13 @@ When setting up an event, the module assumes that the current place ([game.Place
 
 ### Games which Teleport Players
 
-During an event, guests are teleported to a private server created with [TeleportService:ReserveServer](https://developer.roblox.com/en-us/api-reference/function/TeleportService/ReserveServer) of the target game. So, if the target game needs to teleport players to another place, special steps must be taken to return guests back to the event private server. See **Data Store Usage** below.
+During an event, guests are teleported to a private server created with [TeleportService:ReserveServer](https://developer.roblox.com/en-us/api-reference/function/TeleportService/ReserveServer) of the target game. During setup, the teleport details are sent to PopJam to be used by the portal. If the target game teleports players to other places, special steps must be taken to ensure guests say within PopJam servers for the event. This module provides special API for doing this, and it requires minimal edits to existing teleport code.
+
+This repository also contains an [example](example) universe which teleports players between the start place, an alternate public place, and a private minigame place. It's important that you use the sample code to ensure your game teleports players properly so that event guests don't leak into non-event servers from bad teleportation code.
 
 ## Data Store Usage
 
-During event setup, the following data stores are used to save teleport data:
+This module uses data stores to persist information on which reserve servers are hosting which PopJam event (`PopJamEventId`) and also the teleport details used to teleport to various places during an event (`PopJamTeleportDetails`).
 
 ### `PopJamEventId`
 

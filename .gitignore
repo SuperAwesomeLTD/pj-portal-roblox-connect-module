@@ -9,3 +9,9 @@ roblox.toml
 # Build artifacts
 
 PopJam-Portal-Roblox-Connect-Module-v*.rbxmx
+
+# Example build artifacts
+
+example/Lobby.rbxlx
+example/Alternate.rbxlx
+example/Minigame.rbxlx
