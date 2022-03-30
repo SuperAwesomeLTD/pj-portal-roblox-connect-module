@@ -52,7 +52,12 @@ local function warn(...)
 end
 
 function PopJamConnect:isDebugMode()
-	return self.config:GetAttribute(self.ATTR_DEBUG_MODE)
+	return self.config:GetAttribute(self.ATTR_DEBUG_MODE) or RunService:IsStudio()
+end
+
+function PopJamConnect:setDebugMode(isDebugMode)
+	assert(typeof(isDebugMode) == "boolean", "boolean expected")
+	return self.config:SetAttribute(self.ATTR_DEBUG_MODE, isDebugMode)
 end
 
 function PopJamConnect:getCurrentPrivateServerId()
@@ -65,6 +70,12 @@ function PopJamConnect:getCurrentPrivateServerId()
 		privateServerId = privateServerIdOverride
 	end
 	return privateServerId
+end
+
+function PopJamConnect:overridePrivateServerId(privateServerId)
+	assert(typeof(privateServerId) == "string" or typeof(privateServerId) == "nil", "string or nil expected")
+	self.config:SetAttribute(self.ATTR_PRIVATE_SERVER_ID_OVERRIDE, privateServerId)
+	print("PrivateServerId override set to " .. (privateServerId or "nil"))
 end
 
 function PopJamConnect.new()
