@@ -43,7 +43,7 @@ function EventSetupWindow.new(frame)
 		self:submitSetupCode()
 	end)
 	self._submitSetupCodeCallback = function (_self, _tetxt)
-		self.eventIdState:transition()
+		self.setupCodeState:transition()
 	end
 	self:setSetupCodeEnabled(true)
 	
@@ -147,15 +147,15 @@ do -- Enter code state
 			print("Response:", unpack(results))
 			if results[1] then
 				if results[2] then
-					self:showModal("Success! Your event is all set up now.", self._submitEventIdCallback, {"Close"}, true)
+					self:showModal("Success! Your event is all set up now.", self._submitSetupCodeCallback, {"Close"}, true)
 				else
 					self:showModal(
 						typeof(results[3]) == "string" and results[3] or "Something went wrong while setting up your event.",
-						self._submitEventIdCallback, {"Try again", "Close"}, true
+						self._submitSetupCodeCallback, {"Try again", "Close"}, true
 					)
 				end
 			else
-				self:showModal("An error occured while submitting the setup code.", self._submitEventIdCallback, {"Try again", "Close"}, true)
+				self:showModal("An error occured while submitting the setup code.", self._submitSetupCodeCallback, {"Try again", "Close"}, true)
 			end
 
 			self:setSetupCodeEnabled(true)
