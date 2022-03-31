@@ -431,7 +431,7 @@ function PopJamConnect:hasMockEventPermissionsAsync(player)
 		end);
 		-- If this game is owned by a group, is this player the owner?
 		Promise.new(function (resolve, reject, _onCancel)
-			if game.CreatorType == Enum.CreatorType.Group and player:GetRankInGroup(game.CreatorId) > self.GROUP_MIN_RANK then
+			if game.CreatorType == Enum.CreatorType.Group and player:GetRankInGroup(game.CreatorId) >= self.GROUP_MIN_RANK then
 				resolve()
 			else
 				reject()
