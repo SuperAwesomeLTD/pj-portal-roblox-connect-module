@@ -147,7 +147,21 @@ do -- Enter code state
 			print("Response:", unpack(results))
 			if results[1] then
 				if results[2] then
-					self:showModal("Success! Your event is all set up now.", self._submitSetupCodeCallback, {"Close"}, true)
+					local _placeId, popJamEventId, _privateServerId, _privateServerAccessCode = results[3], results[4], results[5], results[6]
+					if popJamEventId:sub(1, 5) == "mock-" then
+						self:showModal(
+							"Success! Mock event is set up. Mock event ID:\n" .. tostring(popJamEventId),
+							function (_self, text)
+								if text == "Join" then
+									self.eventIdState:transition()
+									self.tbEventId.Text = popJamEventId
+								end
+							end,
+							{"Join", "Close"}, true
+						)
+					else
+						self:showModal("Success! Your event is all set up now.", self._submitSetupCodeCallback, {"Close"}, true)
+					end
 				else
 					self:showModal(
 						typeof(results[3]) == "string" and results[3] or "Something went wrong while setting up your event.",
