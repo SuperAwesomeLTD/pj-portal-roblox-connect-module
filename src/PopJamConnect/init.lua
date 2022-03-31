@@ -430,21 +430,17 @@ function PopJamConnect:onSetupCodeSubmitted(player, setupCode, ...)
 end
 
 function PopJamConnect:hasMockEventPermissionsAsync(player)
+	return self:isGameOwnerOrPopJamAdminAsync(player)
+end
+
+function PopJamConnect:isGameOwnerOrPopJamAdminAsync(player)
 	return Promise.any{
-		-- If this game is owned by a user, is this player them?
-		Promise.new(function (resolve, reject, _onCancel)
-			if game.CreatorType == Enum.CreatorType.User and game.CreatorId == player.UserId then
-				resolve()
+		-- Do they own the game?
+		self:isGameOwnerAsync(player):andThen(function (isOwner)
+			if isOwner then
+				return Promise.resolve()
 			else
-				reject()
-			end
-		end);
-		-- If this game is owned by a group, is this player the owner?
-		Promise.new(function (resolve, reject, _onCancel)
-			if game.CreatorType == Enum.CreatorType.Group and player:GetRankInGroup(game.CreatorId) >= self.GROUP_MIN_RANK then
-				resolve()
-			else
-				reject()
+				return Promise.reject()
 			end
 		end);
 		-- Are they a PopJam admin?
@@ -460,6 +456,18 @@ function PopJamConnect:hasMockEventPermissionsAsync(player)
 	end, function ()
 		return Promise.resolve(false)
 	end)
+end
+
+function PopJamConnect:isGameOwnerAsync(player)
+	if game.CreatorType == Enum.CreatorType.User then
+		return Promise.resolve(game.CreatorId == player.UserId)
+	elseif game.CreatorType == Enum.CreatorType.Group then
+		return Promise.promisify(player.GetRankInGroup)(player, game.CreatorId):andThen(function (rank)
+			return Promise.resolve(rank >= self.GROUP_MIN_RANK)
+		end)
+	else
+		return Promise.reject()
+	end
 end
 
 function PopJamConnect:hasMockEventPermissions(...)
