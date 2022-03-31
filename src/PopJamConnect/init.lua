@@ -453,6 +453,7 @@ function PopJamConnect:teleportToEventAsync(players, eventId, teleportData)
 	end)
 end
 
+PopJamConnect.ERR_MUST_USE_PORTAL = "ErrMustUsePortal"
 function PopJamConnect:onEventIdSubmitted(player, eventId, ...)
 	assert(typeof(eventId) == "string" and eventId:len() > 0 and eventId:len() < 1024, "Event id must be a nonempty string")
 	assert(select("#", ...) == 0, "Too many arguments")
@@ -462,14 +463,20 @@ function PopJamConnect:onEventIdSubmitted(player, eventId, ...)
 			if self:isMockPopJamEventId(eventId) then
 				return Promise.reject(PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT)
 			else
-				return Promise.reject("You must be a PopJam admin in order to join a PopJam event")
+				return Promise.reject(PopJamConnect.ERR_MUST_USE_PORTAL)
 			end
 		end
-		return self:teleportToEventAsync({player}, eventId):catch(function (err)
-			warn(tostring(err))
-			return Promise.reject("Error - check developer console.")
-		end):await()
-	end)
+		return self:teleportToEventAsync({player}, eventId)
+	end):catch(function (err)
+		warn(tostring(err))
+		if err == PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT then
+			return Promise.reject("You cannot join mock events.")
+		elseif err == PopJamConnect.ERR_MUST_USE_PORTAL then
+			return Promise.reject(PopJamConnect.ERR_MUST_USE_PORTAL)
+		else
+			return Promise.reject("Error - check server console.")
+		end
+	end):await()
 end
 
 function PopJamConnect:onSetupCodeSubmitted(player, setupCode, ...)
@@ -485,7 +492,7 @@ function PopJamConnect:onSetupCodeSubmitted(player, setupCode, ...)
 		elseif err == PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT then
 			return Promise.reject("You are not allowed to create mock events.")
 		else
-			return Promise.reject("Error - check developer console.")
+			return Promise.reject("Error - check server console.")
 		end
 	end):await()
 end

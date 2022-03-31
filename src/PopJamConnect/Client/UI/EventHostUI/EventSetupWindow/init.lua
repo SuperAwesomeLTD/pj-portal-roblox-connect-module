@@ -208,10 +208,17 @@ do -- Enter event id
 				if results[2] then
 					self:showModal("Teleporting!", self._submitEventIdCallback, {"Close"}, true)
 				else
-					self:showModal(
-						typeof(results[3]) == "string" and results[3] or "Something went wrong.",
-						self._submitEventIdCallback, {"Try again", "Close"}, true
-					)
+					if results[3] == "ErrMustUsePortal" then
+						self:showModal(
+							"You must use the PopJam Portal to do that.",
+							self._submitEventIdCallback, {"Try again", "Close"}, true
+						)
+					else
+						self:showModal(
+							typeof(results[3]) == "string" and results[3] or "Something went wrong.",
+							self._submitEventIdCallback, {"Try again", "Close"}, true
+						)
+					end
 				end
 			else
 				self:showModal("An error occured while submitting the event id.", self._submitEventIdCallback, {"Try again", "Close"}, true)
