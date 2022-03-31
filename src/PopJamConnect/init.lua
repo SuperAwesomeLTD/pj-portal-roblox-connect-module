@@ -130,7 +130,7 @@ local reserveServerPromise = Promise.promisify(function (...)
 	return TeleportService:ReserveServer(...)
 end)
 
-function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
+function PopJamConnect:getTeleportDetailsAsync()
 	return self:getHostedEventIdAsync():andThen(function (eventId)
 		if eventId == PopJamConnect.NO_EVENT then
 			return Promise.reject()
@@ -141,26 +141,36 @@ function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
 		return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
 			print(self.DS_TELEPORT_DETAILS, "GetAsync", key, payload)
 
-			-- Safely access payload["placeIds"][placeId]
-			local placeIdTeleportDetails = ((payload or {})["placeIds"] or {})[tostring(placeId)] or {}
+			payload = payload or {}
+			payload["placeIds"] = payload["placeIds"] or {}
+			--payload["startPlaceId"]
 
-			-- Promise that resolves with the privateServerAccessCode and privateServerId
-			local promise
-			if placeIdTeleportDetails["privateServerAccessCode"] and placeIdTeleportDetails["privateServerId"] then
-				-- Already known, just resolve immediately
-				promise = Promise.resolve(placeIdTeleportDetails["privateServerAccessCode"], placeIdTeleportDetails["privateServerId"])
-			else
-				-- Must be reserved, persisted, then resolved
-				promise = reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
-					print("ReserveServer", privateServerAccessCode, privateServerId)
-					return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, false):andThen(function ()
-						return Promise.resolve(privateServerAccessCode, privateServerId)
-					end)
-				end)
-			end
-
-			return promise
+			return Promise.resolve(eventId, payload)
 		end)
+	end)
+end
+
+function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
+	return self:getTeleportDetails():andThen(function (eventId, payload)
+		-- Safely access payload["placeIds"][placeId]
+		local placeIdTeleportDetails = payload["placeIds"][tostring(placeId)] or {}
+
+		-- Promise that resolves with the privateServerAccessCode and privateServerId
+		local promise
+		if placeIdTeleportDetails["privateServerAccessCode"] and placeIdTeleportDetails["privateServerId"] then
+			-- Already known, just resolve immediately
+			promise = Promise.resolve(placeIdTeleportDetails["privateServerAccessCode"], placeIdTeleportDetails["privateServerId"])
+		else
+			-- Must be reserved, persisted, then resolved
+			promise = reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
+				print("ReserveServer", privateServerAccessCode, privateServerId)
+				return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, false):andThen(function ()
+					return Promise.resolve(privateServerAccessCode, privateServerId)
+				end)
+			end)
+		end
+
+		return promise
 	end)
 end
 
