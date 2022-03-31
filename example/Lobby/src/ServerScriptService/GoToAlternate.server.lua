@@ -9,7 +9,7 @@ local function onTriggered(player)
 	if debounce[player] then return end
 	debounce[player] = true
 	
-	TeleportHelpers.teleportToMinigameAsync(PlaceIds.ALTERNATE, {player}, {}):await()
+	TeleportHelpers.teleportToPublicPlaceAsync(PlaceIds.ALTERNATE, {player}, {}):await()
 	
 	debounce[player] = false
 end
