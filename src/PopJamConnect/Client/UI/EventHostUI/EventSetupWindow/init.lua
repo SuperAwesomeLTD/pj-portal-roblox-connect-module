@@ -1,16 +1,20 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local rukkazEventHost = ReplicatedStorage:WaitForChild("RukkazEventHost")
 local setupCodeRemotes = rukkazEventHost:WaitForChild("Remotes"):WaitForChild("SetupCode")
+local eventIdRemotes = rukkazEventHost.Remotes:WaitForChild("EventId")
 
 local lib = require(rukkazEventHost:WaitForChild("lib"))
 local StateMachine = lib.StateMachine
 
 local EventSetupWindow = {}
 EventSetupWindow.__index = EventSetupWindow
+EventSetupWindow.STATE_EVENT_ID = "StateEventId"
 EventSetupWindow.STATE_SETUP_CODE = "StateSetupCode"
 EventSetupWindow.STATE_MODAL = "StateModal"
 EventSetupWindow.reSetupCodePrompt = setupCodeRemotes:WaitForChild("Prompt")
 EventSetupWindow.rfSetupCodeSubmit = setupCodeRemotes:WaitForChild("Submit")
+EventSetupWindow.reEventIdPrompt = eventIdRemotes:WaitForChild("Prompt")
+EventSetupWindow.rfEventIdSubmit = eventIdRemotes:WaitForChild("Submit")
 
 function EventSetupWindow.new(frame)
 	local self = setmetatable({
@@ -22,6 +26,7 @@ function EventSetupWindow.new(frame)
 	
 	self.stateMachine = StateMachine.new()
 	
+	-- Setup code
 	self.frEnterCode = frame:WaitForChild("EnterSetupCode")
 	self.frEnterCode.Visible = false
 	self.setupCodeState = self.stateMachine:newState(EventSetupWindow.STATE_SETUP_CODE)
@@ -33,11 +38,37 @@ function EventSetupWindow.new(frame)
 	end
 	self.frEnterCode:WaitForChild("HBox")
 	self.tbSetupCode = self.frEnterCode.HBox:WaitForChild("SetupCode")
-	self.bSubmit = self.frEnterCode.HBox:WaitForChild("Submit")
-	self.bSubmit.Activated:Connect(function ()
+	self.bSubmitSetupCode = self.frEnterCode.HBox:WaitForChild("Submit")
+	self.bSubmitSetupCode.Activated:Connect(function ()
 		self:submitSetupCode()
 	end)
+	self._submitSetupCodeCallback = function (_self, _tetxt)
+		self.eventIdState:transition()
+	end
+	self:setSetupCodeEnabled(true)
+	
+	-- Event id
+	self.frEnterEventId = frame:WaitForChild("EnterEventId")
+	self.frEnterEventId.Visible = false
+	self.eventIdState = self.stateMachine:newState(EventSetupWindow.STATE_EVENT_ID)
+	self.eventIdState.enter = function (...)
+		return self:enterEventIdState(...)
+	end
+	self.eventIdState.leave = function (...)
+		return self:leaveEventIdState(...)
+	end
+	self.frEnterEventId:WaitForChild("HBox")
+	self.tbEventId = self.frEnterEventId.HBox:WaitForChild("EventId")
+	self.bSubmitEventId = self.frEnterEventId.HBox:WaitForChild("Submit")
+	self.bSubmitEventId.Activated:Connect(function ()
+		self:submitEventId()
+	end)
+	self._submitEventIdCallback = function (_self, _tetxt)
+		self.eventIdState:transition()
+	end
+	self:setEventIdEnabled(true)
 
+	-- Modal
 	self.frModal = self.frame:WaitForChild("Modal")
 	self.frModal.Visible = false
 	self.modalState = self.stateMachine:newState(EventSetupWindow.STATE_MODAL)
@@ -52,7 +83,8 @@ function EventSetupWindow.new(frame)
 	self.bModalButtonPrefab = self.modalButtonsContainer:WaitForChild("Button")
 	self.bModalButtonPrefab.Parent = nil
 	self._defaultModalCallback = function (_self, _text)
-		self.setupCodeState:transition()
+		warn("No modal callback defined")
+		self:close()
 	end
 
 	self:close()
@@ -60,21 +92,19 @@ function EventSetupWindow.new(frame)
 		self:close()
 	end)
 
-	self._promptedConn = EventSetupWindow.reSetupCodePrompt.OnClientEvent:Connect(function (...)
+	-- Start listening for prompts
+	self._promptSetupCodeConn = EventSetupWindow.reSetupCodePrompt.OnClientEvent:Connect(function (...)
 		return self:onSetupCodePrompted(...)
 	end)
-	self:setSetupCodeEnabled(true)
+	self._promptEventIdConn = EventSetupWindow.reEventIdPrompt.OnClientEvent:Connect(function (...)
+		return self:onEventIdPrompted(...)
+	end)
 	
 	return self
 end
 
-function EventSetupWindow:onSetupCodePrompted()
-	self:open()
-end
-
 function EventSetupWindow:open()
 	self.frame.Visible = true
-	self.setupCodeState:transition()
 end
 
 function EventSetupWindow:close()
@@ -87,6 +117,11 @@ function EventSetupWindow:setClosable(closable)
 end
 
 do -- Enter code state
+	function EventSetupWindow:onSetupCodePrompted()
+		self:open()
+		self.setupCodeState:transition()
+	end
+
 	function EventSetupWindow:enterSetupCodeState()
 		StateMachine.State.enter(self.setupCodeState) -- call super
 		self.frEnterCode.Visible = true
@@ -112,15 +147,15 @@ do -- Enter code state
 			print("Response:", unpack(results))
 			if results[1] then
 				if results[2] then
-					self:showModal("Success! Your event is all set up now.", nil, {"Close"}, true)
+					self:showModal("Success! Your event is all set up now.", self._submitEventIdCallback, {"Close"}, true)
 				else
 					self:showModal(
 						typeof(results[3]) == "string" and results[3] or "Something went wrong while setting up your event.",
-						nil, {"Try again", "Close"}, true
+						self._submitEventIdCallback, {"Try again", "Close"}, true
 					)
 				end
 			else
-				self:showModal("An error occured while submitting the setup code.", nil, {"Try again", "Close"}, true)
+				self:showModal("An error occured while submitting the setup code.", self._submitEventIdCallback, {"Try again", "Close"}, true)
 			end
 
 			self:setSetupCodeEnabled(true)
@@ -132,11 +167,70 @@ do -- Enter code state
 	
 	function EventSetupWindow:setSetupCodeEnabled(enabled)
 		self.tbSetupCode.TextEditable = enabled
-		self.bSubmit.AutoButtonColor = enabled
+		self.bSubmitSetupCode.AutoButtonColor = enabled
 	end
 	
 	function EventSetupWindow:isSetupCodeValid(setupCode)
 		return setupCode:len() > 0
+	end
+end
+
+do -- Enter event id 
+	function EventSetupWindow:onEventIdPrompted()
+		self:open()
+		self.eventIdState:transition()
+	end
+
+	function EventSetupWindow:enterEventIdState()
+		StateMachine.State.enter(self.setupCodeState) -- call super
+		self.frEnterEventId.Visible = true
+		self:setClosable(true)
+		self.tbEventId:CaptureFocus()
+	end
+	
+	function EventSetupWindow:leaveEventIdState()
+		StateMachine.State.leave(self.setupCodeState) -- call super
+		self.frEnterEventId.Visible = false
+		self:setClosable(false)
+	end
+	
+	function EventSetupWindow:submitEventId()
+		if self._submitDebounce then return end
+		local eventId = self.tbEventId.Text
+		if self:isEventIdValid(eventId) then
+			self._submitDebounce = true
+			self:setEventIdEnabled(false)
+			
+			self:showModal("Submitting event id...", function () end, {}, false)
+			local results = {pcall(self.rfEventIdSubmit.InvokeServer, self.rfEventIdSubmit, eventId)}
+			print("Response:", unpack(results))
+			if results[1] then
+				if results[2] then
+					self:showModal("Teleporting!", self._submitEventIdCallback, {"Close"}, true)
+				else
+					self:showModal(
+						typeof(results[3]) == "string" and results[3] or "Something went wrong.",
+						self._submitEventIdCallback, {"Try again", "Close"}, true
+					)
+				end
+			else
+				self:showModal("An error occured while submitting the event id.", self._submitEventIdCallback, {"Try again", "Close"}, true)
+			end
+
+			self:setEventIdEnabled(true)
+			self._submitDebounce = nil
+		else
+			self.tbSetupCode:CaptureFocus()
+		end
+	end
+	
+	function EventSetupWindow:setEventIdEnabled(enabled)
+		self.tbEventId.TextEditable = enabled
+		self.bSubmitEventId.AutoButtonColor = enabled
+	end
+	
+	function EventSetupWindow:isEventIdValid(eventId)
+		return eventId:len() > 0
 	end
 end
 

@@ -104,6 +104,9 @@ function PopJamConnect.new()
 	self.remotes.SetupCode.Submit.OnServerInvoke = function (...)
 		return self:onSetupCodeSubmitted(...)
 	end
+	self.remotes.EventId.Submit.OnServerInvoke = function (...)
+		return self:onEventIdSubmitted(...)
+	end
 	local _
 	_, self.dsEventId = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
 	_, self.dsTeleportDetails = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
@@ -130,16 +133,22 @@ local reserveServerPromise = Promise.promisify(function (...)
 	return TeleportService:ReserveServer(...)
 end)
 
-function PopJamConnect:getTeleportDetailsAsync()
-	return self:getHostedEventIdAsync():andThen(function (eventId)
+PopJamConnect.ERR_NOT_HOSTING_EVENT = "ErrNotHostingEvent"
+PopJamConnect.ERR_NO_SUCH_EVENT = "ErrNoSuchEvent"
+function PopJamConnect:getTeleportDetailsAsync(eventId2)
+	return (eventId2 and Promise.resolve(eventId2) or self:getHostedEventIdAsync()):andThen(function (eventId)
 		if eventId == PopJamConnect.NO_EVENT then
-			return Promise.reject()
+			return Promise.reject(PopJamConnect.ERR_NOT_HOSTING_EVENT)
 		end
 		local dataStore = self:getTeleportDetailsDataStore()
 		local getAsyncPromise = Promise.promisify(dataStore.GetAsync)
 		local key = tostring(eventId)
 		return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
 			print(self.DS_TELEPORT_DETAILS, "GetAsync", key, payload)
+
+			if eventId2 and typeof(payload) == "nil" then
+				return Promise.reject(PopJamConnect.ERR_NO_SUCH_EVENT)
+			end
 
 			payload = payload or {}
 			payload["placeIds"] = payload["placeIds"] or {}
@@ -151,7 +160,7 @@ function PopJamConnect:getTeleportDetailsAsync()
 end
 
 function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
-	return self:getTeleportDetails():andThen(function (eventId, payload)
+	return self:getTeleportDetailsAsync():andThen(function (eventId, payload)
 		-- Safely access payload["placeIds"][placeId]
 		local placeIdTeleportDetails = payload["placeIds"][tostring(placeId)] or {}
 
@@ -302,6 +311,10 @@ function PopJamConnect:setupCodePrompt(player)
 	self.remotes.SetupCode.Prompt:FireClient(player)
 end
 
+function PopJamConnect:eventIdPrompt(player)
+	self.remotes.EventId.Prompt:FireClient(player)
+end
+
 function PopJamConnect:persistEventId(privateServerId, eventId)
 	local dsEventId = self:getEventIdDataStore()
 	local updateAsyncPromise = Promise.promisify(dsEventId.UpdateAsync)
@@ -365,10 +378,15 @@ function PopJamConnect:isMockEventSetupCode(setupCode)
 end
 
 function PopJamConnect:generateMockPopJamEventId(player)
-	return 'mock-' .. player.UserId .. "-" .. math.random(1000,9999) .. "-" .. math.random(1000,9999)
+	return "mock-" .. player.UserId .. "-" .. math.random(1000,9999) .. "-" .. math.random(1000,9999)
+end
+
+function PopJamConnect:isMockPopJamEventId(eventId)
+	return eventId:sub(1, 5) == "mock-"
 end
 
 PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT = "ErrCannotCreateMockEvent"
+PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT = "ErrCannotJoinMockEvent"
 function PopJamConnect:validateSetupCode(setupCode, player)
 	if self:isMockEventSetupCode(setupCode) then
 		return self:hasMockEventPermissionsAsync(player):andThen(function (hasMockEventPermissions)
@@ -408,6 +426,49 @@ function PopJamConnect:setupEvent(setupCode, player)
 				end)
 			end)
 		end)
+	end)
+end
+
+PopJamConnect.ERR_MISSING_TELEPORT_DETAILS = "ErrMissingTeleportDetails"
+PopJamConnect.TELEPORTING = "Teleporting"
+function PopJamConnect:teleportToEventAsync(players, eventId, teleportData)
+	teleportData = teleportData or {}
+	return self:getTeleportDetailsAsync(eventId):andThen(function (_eventId, payload)
+		local startPlaceId = payload["startPlaceId"]
+		assert(typeof(startPlaceId) == "number", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+		local placeIdTeleportDetails = assert(payload["placeIds"][tostring(startPlaceId)], PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+
+		local privateServerAccessCode = placeIdTeleportDetails["privateServerAccessCode"]
+		assert(typeof(privateServerAccessCode) == "string", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+		local privateServerId = placeIdTeleportDetails["privateServerId"]
+		assert(typeof(privateServerId) == "string", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+
+		-- Perform teleport
+		local teleportOptions = Instance.new("TeleportOptions")
+		teleportOptions.ReservedServerAccessCode = placeIdTeleportDetails["privateServerAccessCode"]
+		teleportOptions:SetTeleportData(teleportData)
+		return Promise.promisify(TeleportService.TeleportAsync)(TeleportService, startPlaceId, players, teleportOptions):andThen(function ()
+			return Promise.resolve(PopJamConnect.TELEPORTING)
+		end)
+	end)
+end
+
+function PopJamConnect:onEventIdSubmitted(player, eventId, ...)
+	assert(typeof(eventId) == "string" and eventId:len() > 0 and eventId:len() < 1024, "Event id must be a nonempty string")
+	assert(select("#", ...) == 0, "Too many arguments")
+
+	return self:isGameOwnerOrPopJamAdminAsync(player):andThen(function (hasPermission)
+		if not hasPermission then
+			if self:isMockPopJamEventId(eventId) then
+				return Promise.reject(PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT)
+			else
+				return Promise.reject("You must be a PopJam admin in order to join a PopJam event")
+			end
+		end
+		return self:teleportToEventAsync({player}, eventId):catch(function (err)
+			warn(tostring(err))
+			return Promise.reject("Error - check developer console.")
+		end):await()
 	end)
 end
 
