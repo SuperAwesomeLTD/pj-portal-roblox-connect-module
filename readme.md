@@ -1,4 +1,4 @@
-# PopJam Portal Roblox Connect Module v1.2.3
+# PopJam Portal Roblox Connect Module v1.3.0
 
 This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved just for the event! Finally, the teleport details are submitted to PopJam for use in the [PopJam Portal](https://www.roblox.com/games/7649372402)!
 
