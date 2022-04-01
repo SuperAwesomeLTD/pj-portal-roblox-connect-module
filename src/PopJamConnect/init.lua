@@ -22,7 +22,7 @@ local RukkazAPI = require(
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.2.3"
+PopJamConnect.VERSION = "1.3.0"
 PopJamConnect.RukkazAPI = RukkazAPI
 PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
@@ -36,6 +36,21 @@ PopJamConnect.EVENT_UNKNOWN = nil
 PopJamConnect.config = script
 PopJamConnect.ATTR_DEBUG_MODE = "DebugMode"
 PopJamConnect.ATTR_PRIVATE_SERVER_ID_OVERRIDE = "PrivateServerIdOverride"
+
+-- A special setup code which can be used to set up a mock PopJam event,
+-- whose teleport details are NOT sent to PopJam for use in the portal.
+PopJamConnect.MOCK_EVENT_SETUP_CODE = "000000"
+
+-- The SuperAwesomeGaming group, who authors the PopJam Portal.
+PopJamConnect.SA_GROUP_ID = 12478861
+
+-- The minimum rank in the group identified by GROUP_ID which should be
+-- considered an admin who can test event teleportaion using TEST_SETUP_CODE
+PopJamConnect.SA_GROUP_MIN_RANK = 254
+
+-- If this universe is owned by a group, this is the minimum rank required
+-- in order to allow test event teleportation using TEST_SETUP_CODE
+PopJamConnect.GROUP_MIN_RANK = 255
 
 -- Print wrapper
 local print_ = print
@@ -89,6 +104,9 @@ function PopJamConnect.new()
 	self.remotes.SetupCode.Submit.OnServerInvoke = function (...)
 		return self:onSetupCodeSubmitted(...)
 	end
+	self.remotes.EventId.Submit.OnServerInvoke = function (...)
+		return self:onEventIdSubmitted(...)
+	end
 	local _
 	_, self.dsEventId = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_EVENT_ID, PopJamConnect.DS_SCOPE)
 	_, self.dsTeleportDetails = pcall(DataStoreService.GetDataStore, DataStoreService, PopJamConnect.DS_TELEPORT_DETAILS, PopJamConnect.DS_SCOPE)
@@ -115,10 +133,12 @@ local reserveServerPromise = Promise.promisify(function (...)
 	return TeleportService:ReserveServer(...)
 end)
 
-function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
-	return self:getHostedEventIdAsync():andThen(function (eventId)
+PopJamConnect.ERR_NOT_HOSTING_EVENT = "ErrNotHostingEvent"
+PopJamConnect.ERR_NO_SUCH_EVENT = "ErrNoSuchEvent"
+function PopJamConnect:getTeleportDetailsAsync(eventId2)
+	return (eventId2 and Promise.resolve(eventId2) or self:getHostedEventIdAsync()):andThen(function (eventId)
 		if eventId == PopJamConnect.NO_EVENT then
-			return Promise.reject()
+			return Promise.reject(PopJamConnect.ERR_NOT_HOSTING_EVENT)
 		end
 		local dataStore = self:getTeleportDetailsDataStore()
 		local getAsyncPromise = Promise.promisify(dataStore.GetAsync)
@@ -126,26 +146,40 @@ function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
 		return getAsyncPromise(dataStore, key):andThen(function (payload, _dataStoreKeyInfo)
 			print(self.DS_TELEPORT_DETAILS, "GetAsync", key, payload)
 
-			-- Safely access payload["placeIds"][placeId]
-			local placeIdTeleportDetails = ((payload or {})["placeIds"] or {})[tostring(placeId)] or {}
-
-			-- Promise that resolves with the privateServerAccessCode and privateServerId
-			local promise
-			if placeIdTeleportDetails["privateServerAccessCode"] and placeIdTeleportDetails["privateServerId"] then
-				-- Already known, just resolve immediately
-				promise = Promise.resolve(placeIdTeleportDetails["privateServerAccessCode"], placeIdTeleportDetails["privateServerId"])
-			else
-				-- Must be reserved, persisted, then resolved
-				promise = reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
-					print("ReserveServer", privateServerAccessCode, privateServerId)
-					return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, false):andThen(function ()
-						return Promise.resolve(privateServerAccessCode, privateServerId)
-					end)
-				end)
+			if eventId2 and typeof(payload) == "nil" then
+				return Promise.reject(PopJamConnect.ERR_NO_SUCH_EVENT)
 			end
 
-			return promise
+			payload = payload or {}
+			payload["placeIds"] = payload["placeIds"] or {}
+			--payload["startPlaceId"]
+
+			return Promise.resolve(eventId, payload)
 		end)
+	end)
+end
+
+function PopJamConnect:getTeleportDetailsForPlaceIdAsync(placeId)
+	return self:getTeleportDetailsAsync():andThen(function (eventId, payload)
+		-- Safely access payload["placeIds"][placeId]
+		local placeIdTeleportDetails = payload["placeIds"][tostring(placeId)] or {}
+
+		-- Promise that resolves with the privateServerAccessCode and privateServerId
+		local promise
+		if placeIdTeleportDetails["privateServerAccessCode"] and placeIdTeleportDetails["privateServerId"] then
+			-- Already known, just resolve immediately
+			promise = Promise.resolve(placeIdTeleportDetails["privateServerAccessCode"], placeIdTeleportDetails["privateServerId"])
+		else
+			-- Must be reserved, persisted, then resolved
+			promise = reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
+				print("ReserveServer", privateServerAccessCode, privateServerId)
+				return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, false):andThen(function ()
+					return Promise.resolve(privateServerAccessCode, privateServerId)
+				end)
+			end)
+		end
+
+		return promise
 	end)
 end
 
@@ -277,6 +311,10 @@ function PopJamConnect:setupCodePrompt(player)
 	self.remotes.SetupCode.Prompt:FireClient(player)
 end
 
+function PopJamConnect:eventIdPrompt(player)
+	self.remotes.EventId.Prompt:FireClient(player)
+end
+
 function PopJamConnect:persistEventId(privateServerId, eventId)
 	local dsEventId = self:getEventIdDataStore()
 	local updateAsyncPromise = Promise.promisify(dsEventId.UpdateAsync)
@@ -325,26 +363,193 @@ function PopJamConnect:persistTeleportDetails(placeId, eventId, privateServerId,
 	end)
 end
 
-function PopJamConnect:setupEvent(setupCode)
-	return RukkazAPI:setupEvent(setupCode):andThen(function (placeId, eventId, privateServerId, privateServerAccessCode)
-		return self:persistTeleportDetails(placeId, eventId, privateServerId, privateServerAccessCode, true)
+function PopJamConnect:setStartPlaceIdCallback(callback)
+	assert(typeof(callback) == "function", "callback should be a function")
+	self._placeIdCallback = callback
+end
+
+PopJamConnect.ERR_PLACE_ID_INVALID = "ErrPlaceIdInvalid"
+function PopJamConnect:isValidPlaceId(placeId)
+	return typeof(placeId) == "number" and placeId > 0 and math.floor(placeId) == placeId
+end
+
+function PopJamConnect:isMockEventSetupCode(setupCode)
+	return self.MOCK_EVENT_SETUP_CODE == setupCode
+end
+
+function PopJamConnect:generateMockPopJamEventId(player)
+	return "mock-" .. player.UserId .. "-" .. math.random(1000,9999) .. "-" .. math.random(1000,9999)
+end
+
+function PopJamConnect:isMockPopJamEventId(eventId)
+	return eventId:sub(1, 5) == "mock-"
+end
+
+PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT = "ErrCannotCreateMockEvent"
+PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT = "ErrCannotJoinMockEvent"
+function PopJamConnect:validateSetupCode(setupCode, player)
+	if self:isMockEventSetupCode(setupCode) then
+		return self:hasMockEventPermissionsAsync(player):andThen(function (hasMockEventPermissions)
+			if hasMockEventPermissions then
+				return Promise.resolve(self:generateMockPopJamEventId(player), true)
+			else
+				return Promise.reject(PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT)
+			end
+		end)
+	else
+		return RukkazAPI:getEventIdBySetupCode(setupCode):andThen(function (popJamEventId)
+			return Promise.resolve(popJamEventId, false)
+		end)
+	end
+end
+
+function PopJamConnect:setupEvent(setupCode, player)
+	-- Step 1: Validate the event setup code
+	return self:validateSetupCode(setupCode, player):andThen(function (popJamEventId, isMockEvent)
+		-- Step 2a: Get the start place ID (from callback, if set)
+		local placeIdPromise = self._placeIdCallback and Promise.promisify(self._placeIdCallback)(popJamEventId) or Promise.resolve(game.PlaceId)
+		return placeIdPromise:andThen(function (placeId)
+			assert(PopJamConnect:isValidPlaceId(placeId), PopJamConnect.ERR_PLACE_ID_INVALID)
+			-- Step 2b: Reserve a server for the target place ID
+			return reserveServerPromise(placeId):andThen(function (privateServerAccessCode, privateServerId)
+				-- Step 3: Persist the teleport details in data store
+				return self:persistTeleportDetails(placeId, popJamEventId, privateServerId, privateServerAccessCode, true):andThen(function ()
+					if isMockEvent then
+						-- Mock events stop here - don't actually submit teleport details as the setup code is not good.
+						return Promise.resolve(placeId, popJamEventId, privateServerId, privateServerAccessCode)
+					else
+						-- Step 4: Send teleport details to PopJam for use in the PopJam Portal
+						return RukkazAPI:setTeleportDetailsForEvent(popJamEventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
+							return Promise.resolve(placeId, popJamEventId, privateServerId, privateServerAccessCode)
+						end)
+					end
+				end)
+			end)
+		end)
 	end)
 end
 
-function PopJamConnect:onSetupCodeSubmitted(_player, setupCode, ...)
+PopJamConnect.ERR_MISSING_TELEPORT_DETAILS = "ErrMissingTeleportDetails"
+PopJamConnect.TELEPORTING = "Teleporting"
+function PopJamConnect:teleportToEventAsync(players, eventId, teleportData)
+	teleportData = teleportData or {}
+	return self:getTeleportDetailsAsync(eventId):andThen(function (_eventId, payload)
+		local startPlaceId = payload["startPlaceId"]
+		assert(typeof(startPlaceId) == "number", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+		local placeIdTeleportDetails = assert(payload["placeIds"][tostring(startPlaceId)], PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+
+		local privateServerAccessCode = placeIdTeleportDetails["privateServerAccessCode"]
+		assert(typeof(privateServerAccessCode) == "string", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+		local privateServerId = placeIdTeleportDetails["privateServerId"]
+		assert(typeof(privateServerId) == "string", PopJamConnect.ERR_MISSING_TELEPORT_DETAILS)
+
+		-- Perform teleport
+		local teleportOptions = Instance.new("TeleportOptions")
+		teleportOptions.ReservedServerAccessCode = placeIdTeleportDetails["privateServerAccessCode"]
+		teleportOptions:SetTeleportData(teleportData)
+		return Promise.promisify(TeleportService.TeleportAsync)(TeleportService, startPlaceId, players, teleportOptions):andThen(function ()
+			return Promise.resolve(PopJamConnect.TELEPORTING)
+		end)
+	end)
+end
+
+PopJamConnect.ERR_MUST_USE_PORTAL = "ErrMustUsePortal"
+function PopJamConnect:onEventIdSubmitted(player, eventId, ...)
+	assert(typeof(eventId) == "string" and eventId:len() > 0 and eventId:len() < 1024, "Event id must be a nonempty string")
+	assert(select("#", ...) == 0, "Too many arguments")
+
+	return self:isGameOwnerOrPopJamAdminAsync(player):andThen(function (hasPermission)
+		if not hasPermission then
+			if self:isMockPopJamEventId(eventId) then
+				return Promise.reject(PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT)
+			else
+				return Promise.reject(PopJamConnect.ERR_MUST_USE_PORTAL)
+			end
+		end
+		return self:teleportToEventAsync({player}, eventId)
+	end):catch(function (err)
+		warn(tostring(err))
+		if err == PopJamConnect.ERR_CANNOT_JOIN_MOCK_EVENT then
+			return Promise.reject("You cannot join mock events.")
+		elseif err == PopJamConnect.ERR_MUST_USE_PORTAL then
+			return Promise.reject(PopJamConnect.ERR_MUST_USE_PORTAL)
+		else
+			return Promise.reject("Error - check server console.")
+		end
+	end):await()
+end
+
+function PopJamConnect:onSetupCodeSubmitted(player, setupCode, ...)
 	assert(typeof(setupCode) == "string" and setupCode:len() > 0 and setupCode:len() < 1024, "Setup code must be a nonempty string")
 	assert(select("#", ...) == 0, "Too many arguments")
-	return self:setupEvent(setupCode):catch(function (err)
+	return self:setupEvent(setupCode, player):catch(function (err)
 		warn(tostring(err))
 		if tostring(err):lower():match("http requests are not enabled") then
 			warn("Did you forget to enable HttpService.HttpEnabled?")
 			return Promise.reject("HttpService.HttpEnabled is false")
-		elseif err == "ErrNoMatchingEvent" then
+		elseif err == RukkazAPI.ERR_NO_MATCHING_EVENT then
 			return Promise.reject("The setup code you provided doesn't match any event.")
+		elseif err == PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT then
+			return Promise.reject("You are not allowed to create mock events.")
 		else
-			return Promise.reject("Unspecified error")
+			return Promise.reject("Error - check server console.")
 		end
 	end):await()
+end
+
+function PopJamConnect:hasMockEventPermissionsAsync(player)
+	return self:isGameOwnerOrPopJamAdminAsync(player)
+end
+
+function PopJamConnect:isGameOwnerOrPopJamAdminAsync(player)
+	return Promise.any{
+		-- Do they own the game?
+		self:isGameOwnerAsync(player):andThen(function (isOwner)
+			if isOwner then
+				return Promise.resolve()
+			else
+				return Promise.reject()
+			end
+		end);
+		-- Are they a PopJam admin?
+		self:isPopJamAdminAsync(player):andThen(function (isPopJamAdmin)
+			if isPopJamAdmin then
+				return Promise.resolve()
+			else
+				return Promise.reject()
+			end
+		end);
+	}:andThen(function ()
+		return Promise.resolve(true)
+	end, function ()
+		return Promise.resolve(false)
+	end)
+end
+
+function PopJamConnect:isGameOwnerAsync(player)
+	if game.CreatorType == Enum.CreatorType.User then
+		return Promise.resolve(game.CreatorId == player.UserId)
+	elseif game.CreatorType == Enum.CreatorType.Group then
+		return Promise.promisify(player.GetRankInGroup)(player, game.CreatorId):andThen(function (rank)
+			return Promise.resolve(rank >= self.GROUP_MIN_RANK)
+		end)
+	else
+		return Promise.reject()
+	end
+end
+
+function PopJamConnect:hasMockEventPermissions(...)
+	return self:hasMockEventPermissionsAsync(...):expect()
+end
+
+function PopJamConnect:isPopJamAdminAsync(player)
+	return Promise.promisify(player.GetRankInGroup)(player, self.SA_GROUP_ID):andThen(function (rankInSAGroup)
+		return Promise.resolve(rankInSAGroup > self.SA_GROUP_MIN_RANK)
+	end)
+end
+
+function PopJamConnect:isPopJamAdmin(...)
+	return self:isPopJamAdminAsync(...):expect()
 end
 
 return PopJamConnect.new()
