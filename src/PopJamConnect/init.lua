@@ -12,18 +12,18 @@ local Promise = require(
 	:WaitForChild("Promise")
 )
 
-local RukkazAPI = require(
+local PopJamAPI = require(
 	script
 	:WaitForChild("lib")
-	:WaitForChild("Rukkaz Roblox Web API SDK")
-	:WaitForChild("RukkazAPI")
+	:WaitForChild("PopJam Portal Roblox Web API SDK")
+	:WaitForChild("PopJamAPI")
 	:WaitForChild("Singleton")
 )
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.3.0"
-PopJamConnect.RukkazAPI = RukkazAPI
+PopJamConnect.VERSION = "1.3.1"
+PopJamConnect.PopJamAPI = PopJamAPI
 PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
 PopJamConnect.DS_EVENT_ID = PopJamConnect.DS_PREFIX .. "EventId" -- "PopJamEventId"
@@ -289,7 +289,7 @@ function PopJamConnect:setupStarterPlayerScripts()
 end
 
 function PopJamConnect:replicateClientContent()
-	self.clientContent.Name = "RukkazEventHost"
+	self.clientContent.Name = "PopJamConnect"
 	self.clientContent.Parent = ReplicatedStorage
 end
 
@@ -397,7 +397,7 @@ function PopJamConnect:validateSetupCode(setupCode, player)
 			end
 		end)
 	else
-		return RukkazAPI:getEventIdBySetupCode(setupCode):andThen(function (popJamEventId)
+		return PopJamAPI:getEventIdBySetupCodeAsync(setupCode):andThen(function (popJamEventId)
 			return Promise.resolve(popJamEventId, false)
 		end)
 	end
@@ -419,7 +419,7 @@ function PopJamConnect:setupEvent(setupCode, player)
 						return Promise.resolve(placeId, popJamEventId, privateServerId, privateServerAccessCode)
 					else
 						-- Step 4: Send teleport details to PopJam for use in the PopJam Portal
-						return RukkazAPI:setTeleportDetailsForEvent(popJamEventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
+						return PopJamAPI:setTeleportDetailsForEventAsync(popJamEventId, setupCode, placeId, privateServerId, privateServerAccessCode):andThen(function ()
 							return Promise.resolve(placeId, popJamEventId, privateServerId, privateServerAccessCode)
 						end)
 					end
@@ -487,7 +487,7 @@ function PopJamConnect:onSetupCodeSubmitted(player, setupCode, ...)
 		if tostring(err):lower():match("http requests are not enabled") then
 			warn("Did you forget to enable HttpService.HttpEnabled?")
 			return Promise.reject("HttpService.HttpEnabled is false")
-		elseif err == RukkazAPI.ERR_NO_MATCHING_EVENT then
+		elseif err == PopJamAPI.ERR_NO_MATCHING_EVENT then
 			return Promise.reject("The setup code you provided doesn't match any event.")
 		elseif err == PopJamConnect.ERR_CANNOT_CREATE_MOCK_EVENT then
 			return Promise.reject("You are not allowed to create mock events.")

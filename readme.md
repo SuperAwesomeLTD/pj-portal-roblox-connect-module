@@ -1,10 +1,8 @@
-# PopJam Portal Roblox Connect Module v1.3.0
+# PopJam Portal Roblox Connect Module v1.3.1
 
 This module enables your game to host PopJam jam sessions. It facilitates acquisition of an event setup code from a player, usually a PopJam moderator. Using the [PopJam Portal Roblox Web API SDK](https://github.com/SuperAwesomeLTD/pj-portal-roblox-web-api-sdk/tree/PopJam-rebrand), this setup code is validated. Once validated, a server is reserved just for the event! Finally, the teleport details are submitted to PopJam for use in the [PopJam Portal](https://www.roblox.com/games/7649372402)!
 
 [![Download](img/download.png)](https://github.com/SuperAwesomeLTD/pj-portal-roblox-connect-module/releases)
-
-**Note:** Portions of the code make references to Rukkaz - don't worry, this module is still for PopJam!
 
 ## Installation
 
@@ -32,7 +30,7 @@ This module enables your game to host PopJam jam sessions. It facilitates acquis
 
 5. That's it! Continue to "Testing" below. If the game teleports players, you must make some changes to your teleport code.
 
-More details about installation can be found in the [INSTALL](src/RukkazEventHost/INSTALL.lua) ModuleScript.
+More details about installation can be found in the [INSTALL](src/PopJamConnect/INSTALL.lua) ModuleScript.
 
 ## Testing
 
@@ -58,7 +56,7 @@ More details about installation can be found in the [INSTALL](src/RukkazEventHos
 
 ### Customizing Event Target Place ID
 
-When setting up an event, the module assumes that the current place ([game.PlaceId](https://developer.roblox.com/en-us/api-reference/property/DataModel/PlaceId)) is the one to which event guests should be teleported. To change this, call `PopJamConnect.RukkazAPI:setEventHostPlaceIdCallback(func)`, where `func` is a function that returns the place ID to which guests must be sent. This must be done before calling `PopJamConnect:main`. See the [Main](src/Main.server.lua) script.
+When setting up an event, the module assumes that the current place ([game.PlaceId](https://developer.roblox.com/en-us/api-reference/property/DataModel/PlaceId)) is the one to which event guests should be teleported. To change this, call `PopJamConnect:setStartPlaceIdCallback(func)`, where `func` is a function that returns the place ID to which guests must be sent. This must be done before calling `PopJamConnect:main`. See the [Main](src/Main.server.lua) script.
 
 ### Games which Teleport Players
 
