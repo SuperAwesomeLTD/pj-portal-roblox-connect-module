@@ -1,9 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local rukkazEventHost = ReplicatedStorage:WaitForChild("RukkazEventHost")
-local setupCodeRemotes = rukkazEventHost:WaitForChild("Remotes"):WaitForChild("SetupCode")
-local eventIdRemotes = rukkazEventHost.Remotes:WaitForChild("EventId")
+local popJamConnect = ReplicatedStorage:WaitForChild("PopJamConnect")
+local setupCodeRemotes = popJamConnect:WaitForChild("Remotes"):WaitForChild("SetupCode")
+local eventIdRemotes = popJamConnect.Remotes:WaitForChild("EventId")
 
-local lib = require(rukkazEventHost:WaitForChild("lib"))
+local lib = require(popJamConnect:WaitForChild("lib"))
 local StateMachine = lib.StateMachine
 
 local EventSetupWindow = {}

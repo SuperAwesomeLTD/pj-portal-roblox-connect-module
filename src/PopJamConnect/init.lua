@@ -289,7 +289,7 @@ function PopJamConnect:setupStarterPlayerScripts()
 end
 
 function PopJamConnect:replicateClientContent()
-	self.clientContent.Name = "RukkazEventHost"
+	self.clientContent.Name = "PopJamConnect"
 	self.clientContent.Parent = ReplicatedStorage
 end
 

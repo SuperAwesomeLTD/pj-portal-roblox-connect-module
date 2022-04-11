@@ -21,7 +21,7 @@ Read on for more details on the module and ensuring it works in your game.
 	Entry Point & Single-Script Architecture
 
 The entry point of this module is the Main script. If you use single-script architecture,
-disable or remove it and call RukkazEventHost:main() yourself.
+disable or remove it and call PopJamConnect:main() yourself.
 
 	Chat Module
 
@@ -29,11 +29,11 @@ By default, opening the interface added by this module is done by typing "/pj se
 into Roblox's default chat. The module enables this by injecting its own chat module
 which is used by the Lua Chat System at runtime. If using chat is not an option, you
 should create another way for ANY ARBITRARY PLAYER to ask the server to call
-RukkazEventHost:setupCodePrompt(player)
+PopJamConnect:setupCodePrompt(player)
 
 Sometimes in Studio the player loads faster than the module injects the chat module,
 which prevents the chat command from working. You can avoid this by copying
-RukkazEventHostChatModule to a Folder named ChatModules in the Chat game service at edit
+PopJamConnectChatModule to a Folder named ChatModules in the Chat game service at edit
 time. If you do this, make sure to also add a true BoolValue named InsertDefaultModules
 in the ChatModules folder as well. For more details about the Lua Chat System, read:
 
