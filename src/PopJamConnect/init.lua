@@ -22,7 +22,7 @@ local PopJamAPI = require(
 
 local PopJamConnect = {}
 PopJamConnect.__index = PopJamConnect
-PopJamConnect.VERSION = "1.3.1"
+PopJamConnect.VERSION = "1.4.0"
 PopJamConnect.PopJamAPI = PopJamAPI
 PopJamConnect.Promise = Promise
 PopJamConnect.DS_PREFIX = "PopJam"
